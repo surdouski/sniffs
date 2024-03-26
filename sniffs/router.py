@@ -1,10 +1,7 @@
 import re
 from typing import Callable
 import inspect
-
-from sniffs.fixture import inject_fixtures, _RESERVED_FIXTURE_DICT
-from sniffs.util import singleton
-
+import itertools
 
 LHS_VARIABLE_TOKEN = "<"
 RHS_VARIABLE_TOKEN = ">"
@@ -14,7 +11,6 @@ RHS_OPTIONS_TOKEN = "}"
 OPTIONS_DELIMITER = ","
 
 
-@singleton
 class Router:
     def __init__(self):
         self.routes = []
@@ -39,6 +35,7 @@ class Router:
             topic (str): MQTT topic of the received message.
             message (str): Payload of the received message.
         """
+        results = []
         for route in self.routes:
             match = route["topic_pattern"].match(topic)
             if match:
@@ -47,7 +44,7 @@ class Router:
                 _parameter_names = list(_signature.parameters)
                 _all_available_kwargs = {
                     **match.groupdict(),
-                    **_RESERVED_FIXTURE_DICT,
+                    **{"topic": topic, "message": message},
                 }
                 kwargs_to_pass = {
                     arg: value
@@ -55,9 +52,8 @@ class Router:
                     if arg in _parameter_names
                 }  # Get only keyword arguments that exist in the function signature
 
-                return _func(**kwargs_to_pass)
-
-                # route["handler"](topic, message, match.groups(), match.groupdict())
+                results.append(_func(**kwargs_to_pass))
+        return tuple(results) if len(results) else tuple()
 
     def _parse_topic_pattern(self, topic_pattern: str) -> re.Pattern:
         """
@@ -88,35 +84,35 @@ class Router:
         pattern = "/".join(pattern_parts)
         return re.compile(pattern)
 
-    def reset(self):
-        self.routes = []
+    def get_topic_paths(self):
+        return self._generate_subscription_topic_paths(
+            [route["topic_pattern"] for route in self.routes]
+        )
 
+    def _generate_subscription_topic_paths(self, topic_patterns):
+        generated_subscription_topics = []
 
-def route(path):
-    def decorator(func):
-        Router().add_route(path, func)
+        for path in topic_patterns:
+            parts = path.split("/")
+            variables = []
+            for part in parts:
+                if "<" in part and ">" in part:
+                    var_name = part.replace("<", "").replace(">", "")
+                    var_options = var_name.split(":")
+                    if len(var_options) > 1:
+                        path = path.replace(part, var_options[0])
+                        variables.append(
+                            (var_options[0], var_options[1].strip("{}").split(","))
+                        )
+                    else:
+                        path = path.replace(part, var_name)
+                        variables.append((var_name, ["+"]))
 
-        # @inject_fixtures
-        # def wrapper(*args, **kwargs):
-        #     return func(*args, **kwargs)
+            combinations = itertools.product(*[options for _, options in variables])
+            for combo in combinations:
+                topic = path
+                for (var_name, _), val in zip(variables, combo):
+                    topic = topic.replace(f"{var_name}", val)
+                generated_subscription_topics.append(topic)
 
-        # @inject_fixtures
-        # def wrapper(topic, message, groups, named_groups):
-        #     return func(topic, message, groups, named_groups)
-
-        def wrapper(*args, **kwargs):
-            # Get the signature of the wrapped function
-            func_signature = inspect.signature(func)
-            # Bind the provided arguments to the function signature
-            bound_args = func_signature.bind(*args, **kwargs)
-            # Pass only the arguments that are in the function signature
-            return func(
-                *[
-                    bound_args.arguments[param.name]
-                    for param in func_signature.parameters.values()
-                ]
-            )
-
-        return wrapper
-
-    return decorator
+        return generated_subscription_topics
