@@ -26,8 +26,8 @@ from sniffs import Sniffs
 app = Sniffs()
 
 @app.route("<key>:{option_1,option_2}/log/#")
-def incredibly_broad_route(location, topic, message):
-    print(f"location: {location}")
+def incredibly_broad_route(key, topic, message):
+    print(f"key: {key}")
     print(f"topic: {topic}")
     print(f"message: {message}")
 
