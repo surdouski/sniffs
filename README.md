@@ -46,7 +46,7 @@ client.loop_forever()
 
 ## Documentation
 
-### named placeholders
+### Named Placeholders
 
 Placeholders can be used in your routes. For example, `room` here is used as a placeholder
 and the argument name is injected into the function arguments:
@@ -70,10 +70,10 @@ def receive_temperature_data(argument_one):
     ...
 ```
 
-### unnamed placeholders
+### Wildcard Placeholders
 
-If you want to match on anything, you can do so with an unnamed placeholder. This example
-effectively matches on `+/temperature`:
+If you want to match on anything, you can create a wildcard placeholder by not specifying any placeholder options.
+This example effectively matches on the topic of `+/temperature`:
 
 ```python
 @app.route("<room>/temperature")
@@ -81,7 +81,7 @@ def receive_temperature_data(room):
     ...
 ```
 
-You can use any number of named and unnamed routes together:
+You can use any number of named and wildcard placeholders together:
 
 ```python
 @app.route("<room>/<sensor>:{sensor_1,sensor_2}/<sensor_type>{temperature,humidity}")
