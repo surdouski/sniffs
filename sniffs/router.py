@@ -25,7 +25,13 @@ class Router:
         """
         # Parse the topic pattern to automatically add named capture groups
         pattern = self._parse_topic_pattern(topic_pattern)
-        self.routes.append({"topic_pattern": pattern, "handler": handler})
+        self.routes.append(
+            {
+                "topic_pattern": pattern,
+                "handler": handler,
+                "unparsed_pattern": topic_pattern,
+            }
+        )
 
     def route(self, topic: str, message: str):
         """
@@ -86,7 +92,7 @@ class Router:
 
     def get_topic_paths(self):
         return self._generate_subscription_topic_paths(
-            [route["topic_pattern"] for route in self.routes]
+            [route["unparsed_pattern"] for route in self.routes]
         )
 
     def _generate_subscription_topic_paths(self, topic_patterns):

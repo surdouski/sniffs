@@ -29,7 +29,7 @@ class Sniffs:
 
         return decorator
 
-    def _on_connect(self, userdata, flags, reason_code, properties):
+    def _on_connect(self, client, userdata, flags, reason_code, properties):
         if reason_code.is_failure:
             print(
                 f"Failed to connect: {reason_code}. loop_forever() will retry connection"
@@ -37,7 +37,8 @@ class Sniffs:
         else:
             paths = self.router.get_topic_paths()
             for path in paths:
-                self.client.subscribe(path)
+                print(f"Subscribing to {path}")
+                client.subscribe(path)
 
-    def _on_message(self, userdata, msg):
+    def _on_message(self, client, userdata, msg):
         self.router.route(msg.topic, msg.payload)
