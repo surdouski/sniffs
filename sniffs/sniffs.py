@@ -1,3 +1,4 @@
+import logging
 import functools
 from typing import Any, Callable
 import paho.mqtt.client as mqtt
@@ -29,8 +30,14 @@ class Sniffs:
 
         return decorator
 
-    def _on_connect(self, client, userdata, flags, reason_code, properties):
-        if reason_code.is_failure:
+    def _on_connect(self, client, userdata, flags, reason_code, properties=None):
+        # sometimes reason_code is an int, sometimes it's not. wonderful.
+        code = None
+        if isinstance(reason_code, int):
+            code = reason_code
+        else:
+            code = reason_code.value
+        if not (code == 0 or code == 1 or code == 2):
             print(
                 f"Failed to connect: {reason_code}. loop_forever() will retry connection"
             )
