@@ -2,8 +2,7 @@
   description = "sniffs MQTT routing";
 
   inputs.flake-utils.url = "github:numtide/flake-utils";
-#  inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-23.05";
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
   inputs.poetry2nix = {
     url = "github:nix-community/poetry2nix";
     inputs.nixpkgs.follows = "nixpkgs";
@@ -20,7 +19,7 @@
       pkgs = nixpkgs.legacyPackages.${system};
     in {
       packages = rec {
-        plantdb-message-handler = pkgs.callPackage ./. {
+        sniffs = pkgs.callPackage ./. {
           inherit mkPoetryApplication overrides;
         };
         default = self.packages.${system}.sniffs;
