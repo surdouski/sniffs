@@ -44,7 +44,6 @@ class Sniffs:
         else:
             paths = self.router.get_topic_paths()
             for path in paths:
-                print(f"Subscribing to {path}")
                 client.subscribe(path)
 
     def _on_message(self, client, userdata, msg):
