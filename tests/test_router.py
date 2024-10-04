@@ -20,7 +20,7 @@ def test_add_route_no_replacement(router):
 
     router.add_route("home/+/temperature", handler)
     assert len(router.routes) == 1
-    assert router.routes[0]["topic_pattern"].pattern == r"home/+/temperature"
+    assert router.routes[0]["topic_pattern"].pattern == r"home/+/temperature$"
 
 
 def test_add_route_one_replacement(router):
@@ -31,7 +31,7 @@ def test_add_route_one_replacement(router):
     assert len(router.routes) == 1
     assert (
         router.routes[0]["topic_pattern"].pattern
-        == r"home/(?P<some_replacement>[^/]+)/temperature"
+        == r"home/(?P<some_replacement>[^/]+)/temperature$"
     )
 
 
@@ -43,7 +43,7 @@ def test_add_route_two_replacements(router):
     assert len(router.routes) == 1
     assert (
         router.routes[0]["topic_pattern"].pattern
-        == r"home/(?P<replace_1>[^/]+)/(?P<replace_2>[^/]+)"
+        == r"home/(?P<replace_1>[^/]+)/(?P<replace_2>[^/]+)$"
     )
 
 
@@ -55,7 +55,7 @@ def test_add_route_named_replacement(router):
     assert len(router.routes) == 1
     assert (
         router.routes[0]["topic_pattern"].pattern
-        == r"home/(?P<room>living_room|kitchen)/temperature"
+        == r"home/(?P<room>living_room|kitchen)/temperature$"
     )
 
 
@@ -69,7 +69,7 @@ def test_add_route_two_named_replacements(router):
     assert len(router.routes) == 1
     assert (
         router.routes[0]["topic_pattern"].pattern
-        == r"home/(?P<room>living_room|kitchen)/(?P<sensor>sensor1|sensor2)"
+        == r"home/(?P<room>living_room|kitchen)/(?P<sensor>sensor1|sensor2)$"
     )
 
 
@@ -100,6 +100,12 @@ def test_parse_topic_pattern(router):
     pattern = router._parse_topic_pattern("home/<kitchen>/temperature")
     assert pattern.match("home/kitchen/temperature") is not None
     assert pattern.match("home/kitchen/humidity") is None
+
+
+def test_route_does_not_match_partial_route(router):
+    pattern = router._parse_topic_pattern("home/<kitchen>/temperature")
+    assert pattern.match("home/kitchen/temperature") is not None
+    assert pattern.match("home/kitchen/temperature/subtopic") is None
 
 
 def test_route_decorator(sniffs):

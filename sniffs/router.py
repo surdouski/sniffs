@@ -87,7 +87,7 @@ class Router:
                 variable = part[1:-1]
                 part = f"(?P<{re.escape(variable)}>[^/]+)"
             pattern_parts.append(part)
-        pattern = "/".join(pattern_parts)
+        pattern = "/".join(pattern_parts) + "$"
         return re.compile(pattern)
 
     def get_topic_paths(self):
